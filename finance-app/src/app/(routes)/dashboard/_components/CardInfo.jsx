@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import React, { useEffect, useEffectEvent, useState } from "react";
 import formatNumber from "../../../../../utils";
+import getFinancialAdvice from "../../../../../utils/getFinancialAdvice";
 
 function CardInfo({budgetList, incomeList}) {
     const [totalBudget, setTotalBudget] = useState(0);
@@ -23,16 +24,14 @@ function CardInfo({budgetList, incomeList}) {
 
     // Get the AI financial advice
     useEffect(() => {
-        /*
+        
         if (totalBudget > 0 || totalIncome > 0 || totalSpent > 0) {
             const fetchFiancialAdvice= async () => {
                 const advice = await getFinancialAdvice(totalBudget, totalIncome, totalSpent);
-            }
-            setFinancialAdvice(advice);
-        }
-
-        fetchFiancialAdvice();
-        */
+                setFinancialAdvice(advice);
+            };
+            fetchFiancialAdvice();
+        }   
     }, [totalBudget, totalIncome, totalSpent]);
 
     const CalculateCardInfo = () => {
