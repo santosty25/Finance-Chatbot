@@ -2,6 +2,7 @@
 
 import React, { useEffect }  from "react";
 import SideNav from "./_components/SideNav";
+import { Suspense } from "react";
 import DashboardHeader from "./_components/DashboardHeader";
 import { db } from "../../../../utils/dbConfig";
 import { Budgets } from "../../../../utils/schema";
@@ -31,7 +32,9 @@ function DashboardLayout({ children }) {
     return (
         <div>
             <div className="fixed md:w-64 hidden md:block">
-                <SideNav/>
+                <Suspense fallback={<div>Loading navigation...</div>}>
+                    <SideNav />
+                </Suspense>
             </div>
             <div className="md:ml-64">
                 <DashboardHeader/>
