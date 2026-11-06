@@ -57,4 +57,4 @@ function BudgetList() {
   )
 }
 
-export default BudgetList
+export default BudgetList;
