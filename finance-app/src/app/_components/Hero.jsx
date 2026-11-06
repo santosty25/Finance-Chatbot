@@ -24,7 +24,7 @@ function Hero () {
                     </>
                     }
                 >
-                    <img
+                    <Image
                     src={`/dashboard.png`}
                     alt="hero"
                     height={720}

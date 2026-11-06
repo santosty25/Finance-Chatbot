@@ -49,7 +49,7 @@ export default function Page() {
               </p>
             </div>
 
-            <SignIn />
+            <SignIn/>
           </div>
         </main>
       </div>
