@@ -1,5 +1,9 @@
 import { SignUp } from "@clerk/nextjs";
 
 export default function Page() {
-    return <SignUp/>;
+    return (
+        <Suspense fallback={<div>Loading sign-up...</div>}>
+            <SignUp />
+        </Suspense>
+    );
 }

@@ -1,4 +1,5 @@
 import { SignIn } from "@clerk/nextjs";
+import { Suspense } from "react";
 
 /*
 sign-in/[[...sign-in]]/page.jsx
@@ -49,7 +50,9 @@ export default function Page() {
               </p>
             </div>
 
-            <SignIn/>
+            <Suspense fallback={<div>Loading sign-in...</div>}>
+              <SignIn />
+            </Suspense>
           </div>
         </main>
       </div>
