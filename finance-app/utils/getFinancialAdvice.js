@@ -1,13 +1,12 @@
 import { OpenAI } from "openai/client.js";
 
 const opneai = new OpenAI({
-    apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-    dangerouslyAllowBrowser: true,
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
 // This is used to send a request to OpenAI to get AI generated 
 // financial advice
-const getFinancialAdvice = async (totalBudget, totalIncome, totalSepnt) => {
+const getFinancialAdvice = async (totalBudget, totalIncome, totalSpent) => {
     try {
         const userPrompt = `
         Based on the following financial data:
