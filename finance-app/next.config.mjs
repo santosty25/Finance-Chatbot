@@ -4,6 +4,7 @@ const nextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   reactCompiler: true,
+  serverExternalPackages: ["@neondatabase/serverless"],
   turbopack: {
     rules: {
       "*.css": {

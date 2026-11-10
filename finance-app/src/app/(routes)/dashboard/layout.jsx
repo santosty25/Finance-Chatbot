@@ -4,10 +4,7 @@ import React, { useEffect }  from "react";
 import SideNav from "./_components/SideNav";
 import { Suspense } from "react";
 import DashboardHeader from "./_components/DashboardHeader";
-import { db } from "../../../../utils/dbConfig";
-import { Budgets } from "../../../../utils/schema";
 import { useUser } from "@clerk/nextjs";
-import { eq } from "drizzle-orm";
 import { useRouter } from "next/navigation";
 
 /*
@@ -23,9 +20,16 @@ function DashboardLayout({ children }) {
 
     // This function checks whether the user has a budget in the database
     const checkUserBudgets = async () => {
-        const result = await db.select.from(Budgets).where(eq(Budgets.createdBy, user?.primaryEmailAddress?.emailAddress));
-        if(result?.length === 0) {
-            router.replace("/dashboard/budgets");
+        try {
+            const res = await fetch("/api/budgets");
+            if (!res.ok) throw new Error("Failed to load budgets");
+
+            const result = await res.json();
+            if (result.length === 0) {
+                router.replace("/dashboard/budgets");
+            }
+        } catch (error) {
+            console.error("Error checking budgets:", error);
         }
     };
 
