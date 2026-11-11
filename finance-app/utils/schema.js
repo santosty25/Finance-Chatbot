@@ -27,5 +27,5 @@ export const Expenses = pgTable("expenses", {
     name: varchar("name").notNull(),
     amount: varchar("amount").notNull(),
     budgetId: integer("budgetId").references(() => Budgets.id),
-    createdBy: varchar("createdBy").notNull(),
+    createdAt: varchar("createdAt").notNull(),
 })

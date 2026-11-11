@@ -16,7 +16,6 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "User email not found" }, { status: 400 });
     }
 
-    // In Next.js 16, params is a Promise
     const { id } = await params;
     const incomeId = Number(id);
     if (!Number.isInteger(incomeId)) {

@@ -1,14 +1,13 @@
 "use client";
-import { db } from "../../../../../../utils/dbConfig";
-import { Budgets, Expenses } from "../../../../../../utils/schema";
+import React, { useCallback, useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { desc, eq, getTableColumns, sql } from "drizzle-orm";
-import React, { useEffect, useState } from "react";
 import BudgetItem from "../../budgets/_components/BudgetItem";
 import AddExpense from "../_components/AddExpense";
 import ExpenseListTable from "../_components/ExpenseListTable";
+import EditBudget from "../_components/EditBudget";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Pen, PenBox, Trash } from "lucide-react";
+import { ArrowLeft, Trash } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,82 +20,64 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import EditBudget from "../_components/EditBudget";
 
-function ExpensesScreen({ params }) {
+function ExpensesScreen() {
+  const { id } = useParams();
   const { user } = useUser();
-  const [budgetInfo, setbudgetInfo] = useState();
+  const router = useRouter();
+  const [budgetInfo, setBudgetInfo] = useState();
   const [expensesList, setExpensesList] = useState([]);
-  const route = useRouter();
-  useEffect(() => {
-    user && getBudgetInfo();
-  }, [user]);
 
-  /**
-   * Get Budget Information
-   */
-  const getBudgetInfo = async () => {
-    const result = await db
-      .select({
-        ...getTableColumns(Budgets),
-        totalSpend: sql`sum(${Expenses.amount})`.mapWith(Number),
-        totalItem: sql`count(${Expenses.id})`.mapWith(Number),
-      })
-      .from(Budgets)
-      .leftJoin(Expenses, eq(Budgets.id, Expenses.budgetId))
-      .where(eq(Budgets.createdBy, user?.primaryEmailAddress?.emailAddress))
-      .where(eq(Budgets.id, params.id))
-      .groupBy(Budgets.id);
+  // Loads the budget and its expenses
+  const loadData = useCallback(async () => {
+    try {
+      const [budgetRes, expensesRes] = await Promise.all([
+        fetch(`/api/budgets/${id}`),
+        fetch(`/api/expenses?budgetId=${id}`),
+      ]);
 
-    setbudgetInfo(result[0]);
-    getExpensesList();
-  };
+      if (budgetRes.status === 404) {
+        toast.error("Budget not found");
+        router.replace("/dashboard/budgets");
+        return;
+      }
+      if (!budgetRes.ok || !expensesRes.ok) throw new Error("Failed to load data");
 
-  /**
-   * Get Latest Expenses
-   */
-  const getExpensesList = async () => {
-    const result = await db
-      .select()
-      .from(Expenses)
-      .where(eq(Expenses.budgetId, params.id))
-      .orderBy(desc(Expenses.id));
-    setExpensesList(result);
-    console.log(result);
-  };
-
-  /**
-   * Used to Delete budget
-   */
-  const deleteBudget = async () => {
-    const deleteExpenseResult = await db
-      .delete(Expenses)
-      .where(eq(Expenses.budgetId, params.id))
-      .returning();
-
-    if (deleteExpenseResult) {
-      const result = await db
-        .delete(Budgets)
-        .where(eq(Budgets.id, params.id))
-        .returning();
+      setBudgetInfo(await budgetRes.json());
+      setExpensesList(await expensesRes.json());
+    } catch (error) {
+      console.error("Error loading budget page:", error);
     }
-    toast("Budget Deleted !");
-    route.replace("/dashboard/budgets");
+  }, [id, router]);
+
+  useEffect(() => {
+    if (user) loadData();
+  }, [user, loadData]);
+
+  // Deletes the budget and its expenses
+  const deleteBudget = async () => {
+    try {
+      const res = await fetch(`/api/budgets/${id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+
+      toast.success("Budget Deleted!");
+      router.replace("/dashboard/budgets");
+    } catch (error) {
+      console.error("Error deleting budget:", error);
+      toast.error(error.message || "Failed to delete budget.");
+    }
   };
 
   return (
     <div className="p-10">
       <h2 className="text-2xl font-bold gap-2 flex justify-between items-center">
         <span className="flex gap-2 items-center">
-          <ArrowLeft onClick={() => route.back()} className="cursor-pointer" />
+          <ArrowLeft onClick={() => router.back()} className="cursor-pointer" />
           My Expenses
         </span>
         <div className="flex gap-2 items-center">
-          <EditBudget
-            budgetInfo={budgetInfo}
-            refreshData={() => getBudgetInfo()}
-          />
+          <EditBudget budgetInfo={budgetInfo} refreshData={loadData} />
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -109,13 +90,12 @@ function ExpensesScreen({ params }) {
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This action cannot be undone. This will permanently delete
-                  your current budget along with expenses and remove your data
-                  from our servers.
+                  your current budget along with its expenses.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => deleteBudget()}>
+                <AlertDialogAction onClick={deleteBudget}>
                   Continue
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -123,29 +103,18 @@ function ExpensesScreen({ params }) {
           </AlertDialog>
         </div>
       </h2>
-      <div
-        className="grid grid-cols-1 
-        md:grid-cols-2 mt-6 gap-5"
-      >
+
+      <div className="grid grid-cols-1 md:grid-cols-2 mt-6 gap-5">
         {budgetInfo ? (
           <BudgetItem budget={budgetInfo} />
         ) : (
-          <div
-            className="h-[150px] w-full bg-slate-200 
-            rounded-lg animate-pulse"
-          ></div>
+          <div className="h-[150px] w-full bg-slate-200 rounded-lg animate-pulse"></div>
         )}
-        <AddExpense
-          budgetId={params.id}
-          user={user}
-          refreshData={() => getBudgetInfo()}
-        />
+        <AddExpense budgetId={id} refreshData={loadData} />
       </div>
+
       <div className="mt-4">
-        <ExpenseListTable
-          expensesList={expensesList}
-          refreshData={() => getBudgetInfo()}
-        />
+        <ExpenseListTable expensesList={expensesList} refreshData={loadData} />
       </div>
     </div>
   );

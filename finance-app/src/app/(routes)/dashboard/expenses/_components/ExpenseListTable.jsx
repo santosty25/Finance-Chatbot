@@ -1,22 +1,24 @@
-import { db } from "../../../../../../utils/dbConfig";
-import { Expenses } from "../../../../../../utils/schema";
-import { eq } from "drizzle-orm";
-import { Trash } from "lucide-react";
+"use client";
 import React from "react";
 import { toast } from "sonner";
 
-function ExpenseListTable({ expensesList, refreshData }) {
+function ExpenseListTable({ expensesList = [], refreshData }) {
   const deleteExpense = async (expense) => {
-    const result = await db
-      .delete(Expenses)
-      .where(eq(Expenses.id, expense.id))
-      .returning();
+    try {
+      const res = await fetch(`/api/expenses/${expense.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
 
-    if (result) {
-      toast("Expense Deleted!");
-      refreshData();
+      toast.success("Expense Deleted!");
+      refreshData?.();
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+      toast.error(error.message || "Failed to delete expense.");
     }
   };
+
   return (
     <div className="mt-3">
       <h2 className="font-bold text-lg">Latest Expenses</h2>
@@ -26,23 +28,17 @@ function ExpenseListTable({ expensesList, refreshData }) {
         <h2 className="font-bold">Date</h2>
         <h2 className="font-bold">Action</h2>
       </div>
-      {expensesList.map((expenses, index) => (
-        <div className="grid grid-cols-4 bg-slate-50 rounded-bl-xl rounded-br-xl p-2">
-          <h2>{expenses.name}</h2>
-          <h2>{expenses.amount}</h2>
-          <h2>{expenses.createdAt}</h2>
+      {expensesList.map((expense) => (
+        <div key={expense.id} className="grid grid-cols-4 bg-slate-50 p-2">
+          <h2>{expense.name}</h2>
+          <h2>{expense.amount}</h2>
+          <h2>{expense.createdAt}</h2>
           <h2
-            onClick={() => deleteExpense(expenses)}
+            onClick={() => deleteExpense(expense)}
             className="text-red-500 cursor-pointer"
           >
             Delete
           </h2>
-          {/* <h2>
-            <Trash
-              className="text-red-500 cursor-pointer"
-              onClick={() => deleteExpense(expenses)}
-            />
-          </h2> */}
         </div>
       ))}
     </div>

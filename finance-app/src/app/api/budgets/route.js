@@ -15,7 +15,7 @@ export async function GET() {
     const result = await db
       .select({
         ...getTableColumns(Budgets),
-        totalSpend: sql`sum(${Expenses.amount})`.mapWith(Number),
+        totalSpend: sql`sum(cast(${Expenses.amount} as numeric))`.mapWith(Number),
         totalItem: sql`count(${Expenses.id})`.mapWith(Number),
       })
       .from(Budgets)
@@ -28,5 +28,30 @@ export async function GET() {
   } catch (error) {
     console.error("Budget fetch error:", error);
     return NextResponse.json({ error: "Failed to load budgets" }, { status: 500 });
+  }
+}
+
+export async function POST(request) {
+  try {
+    const { userId } = await auth();
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const email = (await currentUser())?.primaryEmailAddress?.emailAddress;
+    if (!email) return NextResponse.json({ error: "User email not found" }, { status: 400 });
+
+    const { name, amount, icon } = await request.json();
+    if (!name || !amount) {
+      return NextResponse.json({ error: "Name and amount are required" }, { status: 400 });
+    }
+
+    const result = await db
+      .insert(Budgets)
+      .values({ name, amount: String(amount), createdBy: email, icon })
+      .returning({ insertedId: Budgets.id });
+
+    return NextResponse.json(result[0]);
+  } catch (error) {
+    console.error("Budget insertion error:", error);
+    return NextResponse.json({ error: "Failed to create budget" }, { status: 500 });
   }
 }
