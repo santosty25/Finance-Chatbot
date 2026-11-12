@@ -1,17 +1,15 @@
-export async function getFinancialAdvice(message) {
+export async function getFinancialAdvice(totalBudget, totalIncome, totalSpent) {
     const response = await fetch("/api/financial-advice", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ totalBudget, totalIncome, totalSpent }),
     });
 
-    if (!response.ok) {
-        throw new Error("Failed to generate financial advice");
-    }
+    const data = await response.json().catch(() => ({}));
 
-    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.error || `Failed to generate financial advice (${response.status})`);
+    }
 
     return data.advice;
 }

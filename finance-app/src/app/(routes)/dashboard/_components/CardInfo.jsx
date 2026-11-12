@@ -26,11 +26,16 @@ function CardInfo({budgetList, incomeList}) {
     useEffect(() => {
         
         if (totalBudget > 0 || totalIncome > 0 || totalSpent > 0) {
-            const fetchFiancialAdvice= async () => {
-                const advice = await getFinancialAdvice(totalBudget, totalIncome, totalSpent);
-                setFinancialAdvice(advice);
+            const fetchFinancialAdvice = async () => {
+                try {
+                    const advice = await getFinancialAdvice(totalBudget, totalIncome, totalSpent);
+                    setFinancialAdvice(advice);
+                } catch (error) {
+                    console.error("Financial advice error:", error);
+                    setFinancialAdvice("Financial advice is unavailable right now.");
+                }
             };
-            fetchFiancialAdvice();
+            fetchFinancialAdvice();
         }   
     }, [totalBudget, totalIncome, totalSpent]);
 
@@ -41,11 +46,11 @@ function CardInfo({budgetList, incomeList}) {
 
         budgetList.forEach((element) => {
             totalBudget_ = totalBudget_ + Number(element.amount);
-            totalSpent_ = totalSpent_ + element.totalSpent;
+            totalSpent_ = totalSpent_ + Number(element.totalSpend || 0);
         });
 
         incomeList.forEach((element) => {
-            totalIncome_ = totalIncome_ + element.totalAmount;
+            totalIncome_ = totalIncome_ + Number(element.totalAmount || 0);
         });
 
         setTotalBudget(totalBudget_);
@@ -79,7 +84,7 @@ function CardInfo({budgetList, incomeList}) {
                     <div className="mt-7 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         <div className="p-7 border rounded-2xl flex items-center justify-between">
                             <div>
-                                <h2 classname="text-sm">Total Budget</h2>
+                                <h2 className="text-sm">Total Budget</h2>
                                 <h2 className="font-bold text-2xl">${formatNumber(totalBudget)}</h2>
                             </div>
                             <PiggyBank className="bg-blue-800 p-3 h-12 w-12 rounded-full text-white"/>
@@ -89,7 +94,7 @@ function CardInfo({budgetList, incomeList}) {
                     <div className="mt-7 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         <div className="p-7 border rounded-2xl flex items-center justify-between">
                             <div>
-                                <h2 classname="text-sm">Total Spent</h2>
+                                <h2 className="text-sm">Total Spent</h2>
                                 <h2 className="font-bold text-2xl">${formatNumber(totalSpent)}</h2>
                             </div>
                             <ReceiptText className="bg-blue-800 p-3 h-12 w-12 rounded-full text-white"/>
@@ -99,8 +104,8 @@ function CardInfo({budgetList, incomeList}) {
                     <div className="mt-7 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         <div className="p-7 border rounded-2xl flex items-center justify-between">
                             <div>
-                                <h2 classname="text-sm">Number of Budget</h2>
-                                <h2 className="font-bold text-2xl">${budgetList.length}</h2>
+                                <h2 className="text-sm">Number of Budget</h2>
+                                <h2 className="font-bold text-2xl">{budgetList.length}</h2>
                             </div>
                             <Wallet className="bg-blue-800 p-3 h-12 w-12 rounded-full text-white"/>
                         </div>
@@ -109,7 +114,7 @@ function CardInfo({budgetList, incomeList}) {
                     <div className="mt-7 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         <div className="p-7 border rounded-2xl flex items-center justify-between">
                             <div>
-                                <h2 classname="text-sm">Sum of Income Streams</h2>
+                                <h2 className="text-sm">Sum of Income Streams</h2>
                                 <h2 className="font-bold text-2xl">${formatNumber(totalIncome)}</h2>
                             </div>
                             <CircleDollarSign className="bg-blue-800 p-3 h-12 w-12 rounded-full text-white"/>
